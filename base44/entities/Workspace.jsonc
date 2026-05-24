@@ -1,0 +1,35 @@
+{
+  "name": "Workspace",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Workspace name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Workspace description"
+    },
+    "security_key": {
+      "type": "string",
+      "description": "Secret key for employees to join this workspace"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the workspace admin/owner"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "Workspace logo URL"
+    },
+    "settings": {
+      "type": "object",
+      "description": "Workspace settings and preferences"
+    }
+  },
+  "required": [
+    "name",
+    "security_key",
+    "owner_email"
+  ]
+}

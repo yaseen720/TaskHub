@@ -1,0 +1,49 @@
+{
+  "name": "ChatMessage",
+  "type": "object",
+  "properties": {
+    "workspace_id": {
+      "type": "string",
+      "description": "Workspace this message belongs to"
+    },
+    "channel": {
+      "type": "string",
+      "description": "Channel name or DM identifier"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Sender's email"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Sender's display name"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "file_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Attached file URLs"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "file",
+        "system"
+      ],
+      "default": "text",
+      "description": "Type of message"
+    }
+  },
+  "required": [
+    "workspace_id",
+    "channel",
+    "sender_email",
+    "content"
+  ]
+}

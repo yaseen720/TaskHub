@@ -1,0 +1,92 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "workspace_id": {
+      "type": "string",
+      "description": "Workspace this task belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Task title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed task description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "submitted",
+        "approved",
+        "rejected",
+        "late",
+        "missed"
+      ],
+      "default": "pending",
+      "description": "Task status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Priority level"
+    },
+    "category": {
+      "type": "string",
+      "description": "Task category"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of the assigned employee"
+    },
+    "assigned_to_name": {
+      "type": "string",
+      "description": "Name of the assigned employee"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Task deadline"
+    },
+    "file_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Attached file URLs"
+    },
+    "submission_text": {
+      "type": "string",
+      "description": "Employee's submission text"
+    },
+    "submission_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Submitted file URLs"
+    },
+    "submission_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the task was submitted"
+    },
+    "review_comment": {
+      "type": "string",
+      "description": "Admin's review comment"
+    }
+  },
+  "required": [
+    "workspace_id",
+    "title",
+    "status"
+  ]
+}
