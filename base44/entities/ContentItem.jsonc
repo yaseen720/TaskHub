@@ -1,0 +1,52 @@
+{
+  "name": "ContentItem",
+  "type": "object",
+  "properties": {
+    "workspace_id": {
+      "type": "string",
+      "description": "Workspace ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "Content title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Content description"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "image"
+      ],
+      "description": "Type of content"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Uploaded file URL"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "Uploader email"
+    },
+    "uploaded_by_name": {
+      "type": "string",
+      "description": "Uploader display name"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Content tags"
+    }
+  },
+  "required": [
+    "workspace_id",
+    "title",
+    "type",
+    "file_url",
+    "uploaded_by"
+  ]
+}

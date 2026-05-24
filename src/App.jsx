@@ -19,6 +19,7 @@ import Analytics from '@/pages/Analytics';
 import Settings from '@/pages/Settings';
 import TaskReview from '@/pages/TaskReview';
 import VideoReview from '@/pages/VideoReview';
+import MyContent from '@/pages/MyContent';
 
 // Layout
 import AppLayout from '@/components/layout/AppLayout';
@@ -59,6 +60,7 @@ const WorkspaceRouter = () => {
         <Route path="/settings" element={<Settings />} />
         <Route path="/task-review" element={<TaskReview />} />
         <Route path="/video-review" element={<VideoReview />} />
+        <Route path="/my-content" element={<MyContent />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

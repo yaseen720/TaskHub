@@ -19,7 +19,7 @@ import {
   Building2,
   Menu,
   ClipboardList,
-  Video,
+  FolderOpen,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
@@ -35,8 +35,8 @@ const adminNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Kanban Board', icon: KanbanSquare, path: '/kanban' },
   { label: 'Task Review', icon: ClipboardList, path: '/task-review' },
+  { label: 'My Content', icon: FolderOpen, path: '/my-content' },
   { label: 'Team', icon: Users, path: '/team' },
-  { label: 'Video Review', icon: Video, path: '/video-review' },
   { label: 'Analytics', icon: BarChart3, path: '/analytics' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Leave Requests', icon: CalendarOff, path: '/leaves' },
@@ -47,7 +47,7 @@ const adminNav = [
 const employeeNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'My Tasks', icon: KanbanSquare, path: '/kanban' },
-  { label: 'Submit Video', icon: Video, path: '/video-review' },
+  { label: 'My Videos', icon: FolderOpen, path: '/my-content' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Leave Requests', icon: CalendarOff, path: '/leaves' },
   { label: 'Settings', icon: Settings, path: '/settings' },
