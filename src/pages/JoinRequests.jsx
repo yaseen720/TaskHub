@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, UserPlus } from 'lucide-react';
+import { CheckCircle, XCircle, UserPlus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import EmptyState from '@/components/shared/EmptyState';
@@ -14,6 +14,7 @@ export default function JoinRequests() {
   const { activeWorkspace, currentUser } = useWorkspace();
   const wsId = activeWorkspace?.id;
   const queryClient = useQueryClient();
+  const [processingId, setProcessingId] = useState(null);
 
   const { data: requests = [] } = useQuery({
     queryKey: ['joinRequests', wsId],
@@ -22,37 +23,48 @@ export default function JoinRequests() {
   });
 
   const handleReview = async (request, approved) => {
-    await base44.entities.JoinRequest.update(request.id, {
-      status: approved ? 'approved' : 'rejected',
-      reviewed_by: currentUser.email,
-    });
+    setProcessingId(request.id);
+    try {
+      console.log(`Reviewing request ${request.id}, approved: ${approved}`);
+      
+      await base44.entities.JoinRequest.update(request.id, {
+        status: approved ? 'approved' : 'rejected',
+        reviewed_by: currentUser.email,
+      });
 
-    if (approved) {
-      // Create workspace member
-      await base44.entities.WorkspaceMember.create({
+      if (approved) {
+        console.log('Adding member to workspace...');
+        await base44.entities.WorkspaceMember.create({
+          workspace_id: wsId,
+          user_email: request.user_email,
+          user_name: request.user_name,
+          role: 'employee',
+          skills: request.skills || [],
+          status: 'active',
+        });
+      }
+
+      console.log('Creating notification...');
+      // Notify the requester
+      await base44.entities.Notification.create({
         workspace_id: wsId,
         user_email: request.user_email,
-        user_name: request.user_name,
-        role: 'employee',
-        skills: request.skills || [],
-        status: 'active',
+        title: approved ? 'Request Approved!' : 'Request Rejected',
+        message: approved
+          ? `You are now a member of ${activeWorkspace.name}!`
+          : `Your request to join ${activeWorkspace.name} was rejected.`,
+        type: approved ? 'join_approved' : 'join_rejected',
       });
+
+      toast.success(approved ? 'Member approved and added!' : 'Request rejected');
+      queryClient.invalidateQueries({ queryKey: ['joinRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+    } catch (error) {
+      console.error('Error reviewing join request:', error);
+      toast.error(error.message || 'Failed to process request. Check browser console.');
+    } finally {
+      setProcessingId(null);
     }
-
-    // Notify the requester
-    await base44.entities.Notification.create({
-      workspace_id: wsId,
-      user_email: request.user_email,
-      title: approved ? 'Request Approved!' : 'Request Rejected',
-      message: approved
-        ? `You are now a member of ${activeWorkspace.name}!`
-        : `Your request to join ${activeWorkspace.name} was rejected.`,
-      type: approved ? 'join_approved' : 'join_rejected',
-    });
-
-    toast.success(approved ? 'Member approved and added!' : 'Request rejected');
-    queryClient.invalidateQueries({ queryKey: ['joinRequests'] });
-    queryClient.invalidateQueries({ queryKey: ['members'] });
   };
 
   const pending = requests.filter(r => r.status === 'pending');
@@ -86,11 +98,23 @@ export default function JoinRequests() {
                       <p className="text-[10px] text-muted-foreground mt-2">{format(new Date(req.created_date), 'MMM d, yyyy h:mm a')}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleReview(req, true)}>
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve
+                      <Button 
+                        size="sm" 
+                        className="bg-emerald-600 hover:bg-emerald-700" 
+                        onClick={() => handleReview(req, true)}
+                        disabled={!!processingId}
+                      >
+                        {processingId === req.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+                        Approve
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleReview(req, false)}>
-                        <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => handleReview(req, false)}
+                        disabled={!!processingId}
+                      >
+                        {processingId === req.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <XCircle className="h-3.5 w-3.5 mr-1" />}
+                        Reject
                       </Button>
                     </div>
                   </CardContent>
