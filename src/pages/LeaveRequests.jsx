@@ -41,47 +41,58 @@ export default function LeaveRequests() {
   const handleCreate = async () => {
     if (!form.start_date || !form.end_date || !form.reason.trim()) return;
     setLoading(true);
-    await base44.entities.LeaveRequest.create({
-      workspace_id: wsId,
-      user_email: currentUser.email,
-      user_name: currentUser.full_name || currentUser.email,
-      ...form,
-      status: 'pending',
-    });
-
-    // Notify admins
-    const members = await base44.entities.WorkspaceMember.filter({ workspace_id: wsId, role: 'admin' });
-    for (const admin of members) {
-      await base44.entities.Notification.create({
+    try {
+      await base44.entities.LeaveRequest.create({
         workspace_id: wsId,
-        user_email: admin.user_email,
-        title: 'Leave Request',
-        message: `${currentUser.full_name} requested leave: ${form.leave_type}`,
-        type: 'leave_request',
+        user_email: currentUser.email,
+        user_name: currentUser.full_name || currentUser.email,
+        ...form,
+        status: 'pending',
       });
-    }
 
-    toast.success('Leave request submitted');
-    queryClient.invalidateQueries({ queryKey: ['leaves'] });
-    setCreateOpen(false);
-    setForm({ start_date: '', end_date: '', reason: '', leave_type: 'personal' });
-    setLoading(false);
+      // Notify admins
+      const members = await base44.entities.WorkspaceMember.filter({ workspace_id: wsId, role: 'admin' });
+      for (const admin of members) {
+        await base44.entities.Notification.create({
+          workspace_id: wsId,
+          user_email: admin.user_email,
+          title: 'Leave Request',
+          message: `${currentUser.full_name} requested leave: ${form.leave_type}`,
+          type: 'leave_request',
+        });
+      }
+
+      toast.success('Leave request submitted');
+      queryClient.invalidateQueries({ queryKey: ['leaves'] });
+      setCreateOpen(false);
+      setForm({ start_date: '', end_date: '', reason: '', leave_type: 'personal' });
+    } catch (error) {
+      console.error('Leave request error:', error);
+      toast.error(error.message || 'Failed to submit leave request');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReview = async (id, approved, userEmail) => {
-    await base44.entities.LeaveRequest.update(id, {
-      status: approved ? 'approved' : 'rejected',
-      reviewed_by: currentUser.email,
-    });
-    await base44.entities.Notification.create({
-      workspace_id: wsId,
-      user_email: userEmail,
-      title: approved ? 'Leave Approved' : 'Leave Rejected',
-      message: `Your leave request was ${approved ? 'approved' : 'rejected'}`,
-      type: 'leave_reviewed',
-    });
-    toast.success(approved ? 'Leave approved' : 'Leave rejected');
-    queryClient.invalidateQueries({ queryKey: ['leaves'] });
+    try {
+      await base44.entities.LeaveRequest.update(id, {
+        status: approved ? 'approved' : 'rejected',
+        reviewed_by: currentUser.email,
+      });
+      await base44.entities.Notification.create({
+        workspace_id: wsId,
+        user_email: userEmail,
+        title: approved ? 'Leave Approved' : 'Leave Rejected',
+        message: `Your leave request was ${approved ? 'approved' : 'rejected'}`,
+        type: 'leave_reviewed',
+      });
+      toast.success(approved ? 'Leave approved' : 'Leave rejected');
+      queryClient.invalidateQueries({ queryKey: ['leaves'] });
+    } catch (error) {
+      console.error('Leave review error:', error);
+      toast.error(error.message || 'Failed to process leave request');
+    }
   };
 
   return (

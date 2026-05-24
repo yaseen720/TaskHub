@@ -56,52 +56,69 @@ export default function Chat() {
   const sendMessage = async () => {
     if (!messageText.trim() || sending) return;
     setSending(true);
-    await base44.entities.ChatMessage.create({
-      workspace_id: wsId,
-      channel: activeChannel,
-      sender_email: currentUser.email,
-      sender_name: currentUser.full_name || currentUser.email,
-      content: messageText.trim(),
-      message_type: 'text',
-    });
-    setMessageText('');
-    queryClient.invalidateQueries({ queryKey: ['chat', wsId, activeChannel] });
-    setSending(false);
+    try {
+      await base44.entities.ChatMessage.create({
+        workspace_id: wsId,
+        channel: activeChannel,
+        sender_email: currentUser.email,
+        sender_name: currentUser.full_name || currentUser.email,
+        content: messageText.trim(),
+        message_type: 'text',
+      });
+      setMessageText('');
+      queryClient.invalidateQueries({ queryKey: ['chat', wsId, activeChannel] });
+    } catch (error) {
+      console.error('Chat error:', error);
+      toast.error(error.message || 'Failed to send message');
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setSending(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    await base44.entities.ChatMessage.create({
-      workspace_id: wsId,
-      channel: activeChannel,
-      sender_email: currentUser.email,
-      sender_name: currentUser.full_name || currentUser.email,
-      content: `📎 Shared a file`,
-      file_urls: [file_url],
-      message_type: 'file',
-    });
-    queryClient.invalidateQueries({ queryKey: ['chat', wsId, activeChannel] });
-    setSending(false);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.ChatMessage.create({
+        workspace_id: wsId,
+        channel: activeChannel,
+        sender_email: currentUser.email,
+        sender_name: currentUser.full_name || currentUser.email,
+        content: `📎 Shared a file`,
+        file_urls: [file_url],
+        message_type: 'file',
+      });
+      queryClient.invalidateQueries({ queryKey: ['chat', wsId, activeChannel] });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error.message || 'Failed to upload file');
+    } finally {
+      setSending(false);
+    }
   };
 
   const createChannel = async () => {
     if (!newChannelName.trim()) return;
-    // Just create a system message to initialize the channel
-    await base44.entities.ChatMessage.create({
-      workspace_id: wsId,
-      channel: newChannelName.trim().toLowerCase().replace(/\s+/g, '-'),
-      sender_email: currentUser.email,
-      sender_name: 'System',
-      content: `Channel created by ${currentUser.full_name || currentUser.email}`,
-      message_type: 'system',
-    });
-    setActiveChannel(newChannelName.trim().toLowerCase().replace(/\s+/g, '-'));
-    queryClient.invalidateQueries({ queryKey: ['allChat'] });
-    setNewChannelOpen(false);
-    setNewChannelName('');
+    try {
+      // Just create a system message to initialize the channel
+      await base44.entities.ChatMessage.create({
+        workspace_id: wsId,
+        channel: newChannelName.trim().toLowerCase().replace(/\s+/g, '-'),
+        sender_email: currentUser.email,
+        sender_name: 'System',
+        content: `Channel created by ${currentUser.full_name || currentUser.email}`,
+        message_type: 'system',
+      });
+      setActiveChannel(newChannelName.trim().toLowerCase().replace(/\s+/g, '-'));
+      queryClient.invalidateQueries({ queryKey: ['allChat'] });
+      setNewChannelOpen(false);
+      setNewChannelName('');
+    } catch (error) {
+      console.error('Channel error:', error);
+      toast.error(error.message || 'Failed to create channel');
+    }
   };
 
   const sortedMessages = [...messages].reverse();

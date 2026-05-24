@@ -31,51 +31,57 @@ export default function TaskDialog({ open, onOpenChange, members, workspaceId, e
     if (!form.title.trim()) return;
     setLoading(true);
 
-    let file_urls = editTask?.file_urls || [];
-    if (files.length > 0) {
-      for (const f of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: f });
-        file_urls.push(file_url);
+    try {
+      let file_urls = editTask?.file_urls || [];
+      if (files.length > 0) {
+        for (const f of files) {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: f });
+          file_urls.push(file_url);
+        }
       }
-    }
 
-    const assignedMember = members.find(m => m.user_email === form.assigned_to);
-    const taskData = {
-      workspace_id: workspaceId,
-      title: form.title.trim(),
-      description: form.description.trim(),
-      priority: form.priority,
-      category: form.category.trim(),
-      assigned_to: form.assigned_to,
-      assigned_to_name: assignedMember?.user_name || '',
-      due_date: form.due_date || null,
-      status: editTask?.status || 'pending',
-      file_urls,
-    };
+      const assignedMember = members.find(m => m.user_email === form.assigned_to);
+      const taskData = {
+        workspace_id: workspaceId,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        priority: form.priority,
+        category: form.category.trim(),
+        assigned_to: form.assigned_to,
+        assigned_to_name: assignedMember?.user_name || '',
+        due_date: form.due_date || null,
+        status: editTask?.status || 'todo',
+        file_urls,
+      };
 
-    if (editTask) {
-      await base44.entities.Task.update(editTask.id, taskData);
-      toast.success('Task updated');
-    } else {
-      await base44.entities.Task.create(taskData);
-      
-      // Notify assigned employee
-      if (form.assigned_to) {
-        await base44.entities.Notification.create({
-          workspace_id: workspaceId,
-          user_email: form.assigned_to,
-          title: 'New Task Assigned',
-          message: `You have been assigned: "${form.title}"`,
-          type: 'task_assigned',
-        });
+      if (editTask) {
+        await base44.entities.Task.update(editTask.id, taskData);
+        toast.success('Task updated');
+      } else {
+        await base44.entities.Task.create(taskData);
+        
+        // Notify assigned employee
+        if (form.assigned_to) {
+          await base44.entities.Notification.create({
+            workspace_id: workspaceId,
+            user_email: form.assigned_to,
+            title: 'New Task Assigned',
+            message: `You have been assigned: "${form.title}"`,
+            type: 'task_assigned',
+          });
+        }
+        toast.success('Task created');
       }
-      toast.success('Task created');
-    }
 
-    queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    queryClient.invalidateQueries({ queryKey: ['myTasks'] });
-    setLoading(false);
-    onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['myTasks'] });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Task error:', error);
+      toast.error(error.message || 'Failed to save task. Check database columns.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
