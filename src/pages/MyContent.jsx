@@ -24,6 +24,9 @@ const STATUS_COLORS = {
   rejected: 'bg-red-100 text-red-700',
 };
 
+import GoogleDrivePicker from '@/components/shared/GoogleDrivePicker';
+import { downloadGoogleDriveFile } from '@/lib/google-drive';
+
 // ─── Upload Content Dialog (Admin) ──────────────────────────────────────────
 function UploadContentDialog({ open, onOpenChange, workspaceId, currentUser, onSuccess }) {
   const [title, setTitle] = useState('');
@@ -33,6 +36,7 @@ function UploadContentDialog({ open, onOpenChange, workspaceId, currentUser, onS
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [drivePickerOpen, setDrivePickerOpen] = useState(false);
 
   const addTag = () => {
     const t = tagInput.trim();
@@ -45,100 +49,152 @@ function UploadContentDialog({ open, onOpenChange, workspaceId, currentUser, onS
     setTags([]); setTagInput(''); setContentType('video');
   };
 
+  const handleDriveSelect = async (driveFile) => {
+    setDrivePickerOpen(false);
+    setLoading(true);
+    try {
+      toast.loading(`Downloading "${driveFile.name}" from Google Drive...`);
+      const blob = await downloadGoogleDriveFile(driveFile.id);
+      const downloadedFile = new File([blob], driveFile.name, { type: driveFile.mimeType });
+      setFile(downloadedFile);
+      if (!title) setTitle(driveFile.name.split('.')[0]);
+      setContentType(driveFile.mimeType.startsWith('video') ? 'video' : 'image');
+      toast.dismiss();
+      toast.success('File imported from Drive!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error.message || 'Failed to import file from Google Drive');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpload = async () => {
     if (!file || !title) return;
     setLoading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    await base44.entities.ContentItem.create({
-      workspace_id: workspaceId,
-      title,
-      description,
-      type: contentType,
-      file_url,
-      uploaded_by: currentUser.email,
-      uploaded_by_name: currentUser.full_name,
-      tags,
-    });
-    toast.success('Content uploaded successfully!');
-    setLoading(false);
-    onOpenChange(false);
-    reset();
-    onSuccess();
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.ContentItem.create({
+        workspace_id: workspaceId,
+        title,
+        description,
+        type: contentType,
+        file_url,
+        uploaded_by: currentUser.email,
+        uploaded_by_name: currentUser.full_name,
+        tags,
+      });
+      toast.success('Content uploaded successfully!');
+      onOpenChange(false);
+      reset();
+      onSuccess();
+    } catch (error) {
+      toast.error('Upload failed: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={v => { onOpenChange(v); if (!v) reset(); }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader><DialogTitle>Upload New Content</DialogTitle></DialogHeader>
-        <div className="space-y-4 mt-2">
-          {/* Type toggle */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setContentType('video')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-medium transition-all ${contentType === 'video' ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'}`}
-            >
-              <Video className="h-4 w-4" /> Video
-            </button>
-            <button
-              onClick={() => setContentType('image')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-medium transition-all ${contentType === 'image' ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'}`}
-            >
-              <Image className="h-4 w-4" /> Image
-            </button>
-          </div>
-
-          <div>
-            <Label>Title *</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Content title" className="mt-1" />
-          </div>
-          <div>
-            <Label>Description</Label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this about?" className="mt-1 h-20" />
-          </div>
-
-          {/* File upload */}
-          <div>
-            <Label>File *</Label>
-            <input
-              type="file"
-              accept={contentType === 'video' ? 'video/*' : 'image/*'}
-              id="content-file"
-              className="hidden"
-              onChange={e => setFile(e.target.files[0])}
-            />
-            <label htmlFor="content-file" className="mt-1 flex items-center gap-3 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-              <Upload className="h-5 w-5 text-muted-foreground shrink-0" />
-              <span className="text-sm text-muted-foreground truncate">{file ? file.name : `Click to upload ${contentType}`}</span>
-            </label>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <Label>Tags (optional)</Label>
-            <div className="flex gap-2 mt-1">
-              <Input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="Add a tag"
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())} />
-              <Button type="button" variant="outline" size="sm" onClick={addTag}>Add</Button>
+    <>
+      <Dialog open={open} onOpenChange={v => { onOpenChange(v); if (!v) reset(); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>Upload New Content</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* Type toggle */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setContentType('video')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-medium transition-all ${contentType === 'video' ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'}`}
+              >
+                <Video className="h-4 w-4" /> Video
+              </button>
+              <button
+                onClick={() => setContentType('image')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-medium transition-all ${contentType === 'image' ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'}`}
+              >
+                <Image className="h-4 w-4" /> Image
+              </button>
             </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {tags.map(t => (
-                  <span key={t} className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground rounded-full px-2.5 py-0.5 text-xs">
-                    {t}
-                    <button onClick={() => setTags(tags.filter(x => x !== t))}><X className="h-3 w-3" /></button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
 
-          <Button className="w-full" onClick={handleUpload} disabled={loading || !file || !title}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-            Upload
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <div>
+              <Label>Title *</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Content title" className="mt-1" />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this about?" className="mt-1 h-20" />
+            </div>
+
+            {/* File upload options */}
+            <div className="space-y-2">
+              <Label>File *</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="file"
+                  accept={contentType === 'video' ? 'video/*' : 'image/*'}
+                  id="content-file"
+                  className="hidden"
+                  onChange={e => setFile(e.target.files[0])}
+                />
+                <label htmlFor="content-file" className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-3 cursor-pointer hover:bg-muted/50 transition-colors text-sm text-muted-foreground">
+                  <Upload className="h-4 w-4 shrink-0" /> Local
+                </label>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="h-auto py-3 border-2 border-dashed flex gap-2"
+                  onClick={() => setDrivePickerOpen(true)}
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0">
+                    <path d="M12.5 2L6 2l-4 7v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9l-4-7h-5.5z" fill="#FFC107" />
+                    <path d="M15.5 2L12 9h9l-3.5-7h-2z" fill="#1976D2" />
+                    <path d="M8.5 2L2 9h9l-3.5-7h-2z" fill="#4CAF50" />
+                  </svg>
+                  Drive
+                </Button>
+              </div>
+              {file && (
+                <div className="bg-muted/50 rounded-lg p-2 flex items-center justify-between">
+                  <span className="text-xs truncate max-w-[200px]">{file.name}</span>
+                  <button onClick={() => setFile(null)}><X className="h-3 w-3 text-muted-foreground" /></button>
+                </div>
+              )}
+            </div>
+
+            {/* Tags */}
+            <div>
+              <Label>Tags (optional)</Label>
+              <div className="flex gap-2 mt-1">
+                <Input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="Add a tag"
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())} />
+                <Button type="button" variant="outline" size="sm" onClick={addTag}>Add</Button>
+              </div>
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {tags.map(t => (
+                    <span key={t} className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground rounded-full px-2.5 py-0.5 text-xs">
+                      {t}
+                      <button onClick={() => setTags(tags.filter(x => x !== t))}><X className="h-3 w-3" /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Button className="w-full" onClick={handleUpload} disabled={loading || !file || !title}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              Upload
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <GoogleDrivePicker 
+        open={drivePickerOpen} 
+        onOpenChange={setDrivePickerOpen} 
+        onSelect={handleDriveSelect} 
+      />
+    </>
   );
 }
 
@@ -290,54 +346,106 @@ function SubmitVideoDialog({ open, onOpenChange, workspaceId, currentUser, onSuc
   const [description, setDescription] = useState('');
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [drivePickerOpen, setDrivePickerOpen] = useState(false);
+
+  const handleDriveSelect = async (driveFile) => {
+    setDrivePickerOpen(false);
+    setLoading(true);
+    try {
+      toast.loading(`Downloading "${driveFile.name}" from Drive...`);
+      const blob = await downloadGoogleDriveFile(driveFile.id);
+      const downloadedFile = new File([blob], driveFile.name, { type: driveFile.mimeType });
+      setFile(downloadedFile);
+      if (!title) setTitle(driveFile.name.split('.')[0]);
+      toast.dismiss();
+      toast.success('Video imported from Drive!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error.message || 'Failed to import from Drive');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!file || !title) return;
     setLoading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    await base44.entities.VideoSubmission.create({
-      workspace_id: workspaceId,
-      title, description,
-      submitted_by: currentUser.email,
-      submitted_by_name: currentUser.full_name,
-      video_url: file_url,
-      status: 'pending',
-    });
-    toast.success('Video submitted for review!');
-    setLoading(false);
-    onOpenChange(false);
-    setTitle(''); setDescription(''); setFile(null);
-    onSuccess();
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.VideoSubmission.create({
+        workspace_id: workspaceId,
+        title, description,
+        submitted_by: currentUser.email,
+        submitted_by_name: currentUser.full_name,
+        video_url: file_url,
+        status: 'pending',
+      });
+      toast.success('Video submitted for review!');
+      onOpenChange(false);
+      setTitle(''); setDescription(''); setFile(null);
+      onSuccess();
+    } catch (error) {
+      toast.error('Submission failed: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Submit Video for Review</DialogTitle></DialogHeader>
-        <div className="space-y-4 mt-2">
-          <div>
-            <Label>Title *</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Video title" className="mt-1" />
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Submit Video for Review</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <Label>Title *</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Video title" className="mt-1" />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this video about?" className="mt-1 h-20" />
+            </div>
+            <div className="space-y-2">
+              <Label>Video File *</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <input type="file" accept="video/*" id="submit-video" className="hidden" onChange={e => setFile(e.target.files[0])} />
+                <label htmlFor="submit-video" className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-3 cursor-pointer hover:bg-muted/50 transition-colors text-sm text-muted-foreground">
+                  <Upload className="h-4 w-4 shrink-0" /> Local
+                </label>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="h-auto py-3 border-2 border-dashed flex gap-2"
+                  onClick={() => setDrivePickerOpen(true)}
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0">
+                    <path d="M12.5 2L6 2l-4 7v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9l-4-7h-5.5z" fill="#FFC107" />
+                    <path d="M15.5 2L12 9h9l-3.5-7h-2z" fill="#1976D2" />
+                    <path d="M8.5 2L2 9h9l-3.5-7h-2z" fill="#4CAF50" />
+                  </svg>
+                  Drive
+                </Button>
+              </div>
+              {file && (
+                <div className="bg-muted/50 rounded-lg p-2 flex items-center justify-between">
+                  <span className="text-xs truncate max-w-[200px]">{file.name}</span>
+                  <button onClick={() => setFile(null)}><X className="h-3 w-3 text-muted-foreground" /></button>
+                </div>
+              )}
+            </div>
+            <Button className="w-full" onClick={handleSubmit} disabled={loading || !file || !title}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              Submit for Review
+            </Button>
           </div>
-          <div>
-            <Label>Description</Label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this video about?" className="mt-1 h-20" />
-          </div>
-          <div>
-            <Label>Video File *</Label>
-            <input type="file" accept="video/*" id="submit-video" className="hidden" onChange={e => setFile(e.target.files[0])} />
-            <label htmlFor="submit-video" className="mt-1 flex items-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-              <Upload className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{file ? file.name : 'Click to upload video'}</span>
-            </label>
-          </div>
-          <Button className="w-full" onClick={handleSubmit} disabled={loading || !file || !title}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-            Submit for Review
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      <GoogleDrivePicker 
+        open={drivePickerOpen} 
+        onOpenChange={setDrivePickerOpen} 
+        onSelect={handleDriveSelect} 
+      />
+    </>
   );
 }
 

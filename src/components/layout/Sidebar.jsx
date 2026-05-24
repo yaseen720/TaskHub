@@ -22,6 +22,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,7 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { currentUser, activeWorkspace, workspaces, isAdmin, switchWorkspace } = useWorkspace();
+  const { logout } = useAuth();
 
   const navItems = isAdmin ? adminNav : employeeNav;
 
@@ -143,28 +145,18 @@ export default function Sidebar() {
               <p className="text-xs text-sidebar-foreground/50 truncate">{isAdmin ? 'Admin' : 'Employee'}</p>
             </div>
           )}
-          {!collapsed && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-sidebar-foreground/50 hover:text-sidebar-foreground"
-              onClick={() => base44.auth.logout()}
-            >
-              <LogOut className="h-3.5 w-3.5" />
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* Collapse toggle - desktop only */}
-      <div className="hidden lg:block p-2 border-t border-sidebar-border">
+      {/* Logout button - replaces the collapse toggle */}
+      <div className="p-2 border-t border-sidebar-border">
         <Button
           variant="ghost"
-          size="icon"
-          className="w-full h-7 text-sidebar-foreground/50 hover:text-sidebar-foreground"
-          onClick={() => setCollapsed(!collapsed)}
+          className={`w-full h-9 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 transition-colors ${collapsed ? 'px-0 justify-center' : 'justify-start px-3'}`}
+          onClick={() => logout()}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="ml-3 text-sm font-medium">Logout</span>}
         </Button>
       </div>
     </div>

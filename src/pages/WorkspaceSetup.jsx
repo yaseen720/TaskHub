@@ -32,92 +32,113 @@ export default function WorkspaceSetup() {
   const handleCreateWorkspace = async () => {
     if (!wsName.trim()) return;
     setLoading(true);
-    const user = await base44.auth.me();
-    const key = generateSecurityKey();
-    
-    const workspace = await base44.entities.Workspace.create({
-      name: wsName.trim(),
-      description: wsDescription.trim(),
-      security_key: key,
-      owner_email: user.email,
-    });
+    console.log('Starting workspace creation...');
+    try {
+      const user = await base44.auth.me();
+      const key = generateSecurityKey();
+      console.log('User identified:', user.email);
+      
+      const workspace = await base44.entities.Workspace.create({
+        name: wsName.trim(),
+        description: wsDescription.trim(),
+        security_key: key,
+        owner_email: user.email,
+      });
+      console.log('Workspace created:', workspace.id);
 
-    await base44.entities.WorkspaceMember.create({
-      workspace_id: workspace.id,
-      user_email: user.email,
-      user_name: user.full_name || user.email,
-      role: 'admin',
-      status: 'active',
-    });
+      await base44.entities.WorkspaceMember.create({
+        workspace_id: workspace.id,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        role: 'admin',
+        status: 'active',
+      });
+      console.log('Admin membership created');
 
-    toast.success(`Workspace created! Security key: ${key}`, { duration: 8000 });
-    localStorage.setItem('taskhub_active_workspace', workspace.id);
-    navigate('/dashboard');
-    window.location.reload();
+      toast.success(`Workspace created! Security key: ${key}`, { duration: 8000 });
+      localStorage.setItem('taskhub_active_workspace', workspace.id);
+      
+      console.log('Redirecting to dashboard...');
+      navigate('/dashboard');
+      window.location.reload();
+    } catch (error) {
+      console.error('Workspace creation failed:', error);
+      toast.error(error.message || 'Failed to create workspace. Check if database tables are created.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleJoinWorkspace = async () => {
     if (!securityKey.trim()) return;
     setLoading(true);
-    const user = await base44.auth.me();
-    
-    // Find workspace by security key
-    const workspaces = await base44.entities.Workspace.filter({ security_key: securityKey.trim() });
-    
-    if (workspaces.length === 0) {
-      toast.error('Invalid security key. Please check and try again.');
+    console.log('Attempting to join workspace with key:', securityKey.trim());
+    try {
+      const user = await base44.auth.me();
+      
+      // Find workspace by security key
+      const workspaces = await base44.entities.Workspace.filter({ security_key: securityKey.trim() });
+      
+      if (workspaces.length === 0) {
+        toast.error('Invalid security key. Please check and try again.');
+        setLoading(false);
+        return;
+      }
+
+      const workspace = workspaces[0];
+      console.log('Found workspace:', workspace.id);
+
+      // Check if already a member
+      const existing = await base44.entities.WorkspaceMember.filter({
+        workspace_id: workspace.id,
+        user_email: user.email,
+      });
+      if (existing.length > 0) {
+        toast.info('You are already a member of this workspace!');
+        localStorage.setItem('taskhub_active_workspace', workspace.id);
+        navigate('/dashboard');
+        window.location.reload();
+        return;
+      }
+
+      // Check if already has a pending request
+      const existingReq = await base44.entities.JoinRequest.filter({
+        workspace_id: workspace.id,
+        user_email: user.email,
+        status: 'pending',
+      });
+      if (existingReq.length > 0) {
+        toast.info('You already have a pending request for this workspace.');
+        setLoading(false);
+        return;
+      }
+
+      // Create join request
+      await base44.entities.JoinRequest.create({
+        workspace_id: workspace.id,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        skills: skills,
+        message: joinMessage.trim(),
+        status: 'pending',
+      });
+
+      // Notify the workspace admin
+      await base44.entities.Notification.create({
+        workspace_id: workspace.id,
+        user_email: workspace.owner_email,
+        title: 'New Join Request',
+        message: `${user.full_name || user.email} wants to join your workspace`,
+        type: 'join_request',
+      });
+
+      toast.success('Join request sent! The admin will review your request.');
+    } catch (error) {
+      console.error('Join workspace failed:', error);
+      toast.error(error.message || 'Failed to join workspace.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const workspace = workspaces[0];
-
-    // Check if already a member
-    const existing = await base44.entities.WorkspaceMember.filter({
-      workspace_id: workspace.id,
-      user_email: user.email,
-    });
-    if (existing.length > 0) {
-      toast.info('You are already a member of this workspace!');
-      localStorage.setItem('taskhub_active_workspace', workspace.id);
-      navigate('/dashboard');
-      window.location.reload();
-      return;
-    }
-
-    // Check if already has a pending request
-    const existingReq = await base44.entities.JoinRequest.filter({
-      workspace_id: workspace.id,
-      user_email: user.email,
-      status: 'pending',
-    });
-    if (existingReq.length > 0) {
-      toast.info('You already have a pending request for this workspace.');
-      setLoading(false);
-      return;
-    }
-
-    // Create join request
-    await base44.entities.JoinRequest.create({
-      workspace_id: workspace.id,
-      user_email: user.email,
-      user_name: user.full_name || user.email,
-      skills: skills,
-      message: joinMessage.trim(),
-      status: 'pending',
-    });
-
-    // Notify the workspace admin
-    await base44.entities.Notification.create({
-      workspace_id: workspace.id,
-      user_email: workspace.owner_email,
-      title: 'New Join Request',
-      message: `${user.full_name || user.email} wants to join your workspace`,
-      type: 'join_request',
-    });
-
-    toast.success('Join request sent! The admin will review your request.');
-    setLoading(false);
   };
 
   const addSkill = () => {

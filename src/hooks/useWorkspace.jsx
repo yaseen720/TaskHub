@@ -15,33 +15,47 @@ export function WorkspaceProvider({ children }) {
   }, []);
 
   const loadUserData = async () => {
-    setLoading(true);
-    const user = await base44.auth.me();
-    setCurrentUser(user);
+    try {
+      setLoading(true);
+      console.log('Loading user data...');
+      const user = await base44.auth.me();
+      console.log('User found:', user.email);
+      setCurrentUser(user);
 
-    const memberships = await base44.entities.WorkspaceMember.filter({
-      user_email: user.email,
-      status: 'active'
-    });
+      console.log('Fetching memberships...');
+      const memberships = await base44.entities.WorkspaceMember.filter({
+        user_email: user.email,
+        status: 'active'
+      });
+      console.log('Memberships found:', memberships.length);
 
-    if (memberships.length > 0) {
-      const wsIds = memberships.map(m => m.workspace_id);
-      const allWorkspaces = await base44.entities.Workspace.list();
-      const userWorkspaces = allWorkspaces.filter(ws => wsIds.includes(ws.id));
-      setWorkspaces(userWorkspaces);
+      if (memberships.length > 0) {
+        const wsIds = memberships.map(m => m.workspace_id);
+        const allWorkspaces = await base44.entities.Workspace.list();
+        const userWorkspaces = allWorkspaces.filter(ws => wsIds.includes(ws.id));
+        setWorkspaces(userWorkspaces);
+        console.log('Workspaces loaded:', userWorkspaces.length);
 
-      const lastWsId = localStorage.getItem('taskhub_active_workspace');
-      const lastWs = userWorkspaces.find(ws => ws.id === lastWsId);
-      
-      if (lastWs) {
-        setActiveWorkspace(lastWs);
-        setActiveMembership(memberships.find(m => m.workspace_id === lastWs.id));
-      } else if (userWorkspaces.length > 0) {
-        setActiveWorkspace(userWorkspaces[0]);
-        setActiveMembership(memberships.find(m => m.workspace_id === userWorkspaces[0].id));
+        const lastWsId = localStorage.getItem('taskhub_active_workspace');
+        const lastWs = userWorkspaces.find(ws => ws.id === lastWsId);
+        
+        if (lastWs) {
+          setActiveWorkspace(lastWs);
+          setActiveMembership(memberships.find(m => m.workspace_id === lastWs.id));
+        } else if (userWorkspaces.length > 0) {
+          setActiveWorkspace(userWorkspaces[0]);
+          setActiveMembership(memberships.find(m => m.workspace_id === userWorkspaces[0].id));
+        }
+      } else {
+        setWorkspaces([]);
+        setActiveWorkspace(null);
+        setActiveMembership(null);
       }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const switchWorkspace = (workspace) => {
