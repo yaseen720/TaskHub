@@ -83,6 +83,13 @@ const AuthenticatedApp = () => {
     } else if (authError.type === 'auth_required') {
       navigateToLogin();
       return null;
+    } else {
+      // For unknown errors, still try to render the app
+      return (
+        <WorkspaceProvider>
+          <WorkspaceRouter />
+        </WorkspaceProvider>
+      );
     }
   }
 
