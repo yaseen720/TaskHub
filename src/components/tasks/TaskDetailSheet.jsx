@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Calendar, User, Upload, Loader2, CheckCircle, XCircle, Send, Mail, Share2 } from 'lucide-react';
+import { Calendar, User, Upload, Loader2, CheckCircle, XCircle, Send, Mail, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUS_COLORS = {
@@ -104,6 +104,16 @@ export default function TaskDetailSheet({ task, onClose, isAdmin, members, curre
     });
     toast.success('Task details sent via email!');
     setLoading(false);
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = `📋 *Task: ${task.title}*\n` +
+      `👤 Assigned to: ${task.assigned_to_name || task.assigned_to || 'Unassigned'}\n` +
+      `📅 Due: ${task.due_date ? format(new Date(task.due_date), 'MMMM d, yyyy') : 'No deadline'}\n` +
+      `🔖 Status: ${task.status?.replace('_', ' ')}\n` +
+      (task.description ? `\n📝 ${task.description}` : '');
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
   };
 
   const canSubmit = !isAdmin && task.assigned_to === currentUser?.email && ['pending', 'in_progress', 'rejected'].includes(task.status);
@@ -200,11 +210,16 @@ export default function TaskDetailSheet({ task, onClose, isAdmin, members, curre
 
           <Separator />
 
-          {/* Share via Email */}
+          {/* Share via Email & WhatsApp */}
           {isAdmin && task.assigned_to && (
-            <Button variant="outline" className="w-full" onClick={handleShareEmail} disabled={loading}>
-              <Mail className="h-4 w-4 mr-2" /> Share Task via Email
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={handleShareEmail} disabled={loading}>
+                <Mail className="h-4 w-4 mr-2" /> Email
+              </Button>
+              <Button variant="outline" className="flex-1 text-green-600 border-green-200 hover:bg-green-50" onClick={handleShareWhatsApp}>
+                <MessageCircle className="h-4 w-4 mr-2" /> WhatsApp
+              </Button>
+            </div>
           )}
 
           {/* Employee Submit Work */}
