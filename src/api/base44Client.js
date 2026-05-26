@@ -4,7 +4,13 @@ import { supabase } from '@/lib/supabase';
 const applyFilter = (query, criteria) => {
   let q = query;
   Object.entries(criteria).forEach(([key, value]) => {
-    q = q.eq(key, value);
+    if (key === '_or') {
+      // Specialized OR logic for private chats: (sender=A AND recipient=B) OR (sender=B AND recipient=A)
+      const { group1, group2 } = value;
+      q = q.or(`and(user_email.eq.${group1.user_email},recipient_email.eq.${group1.recipient_email}),and(user_email.eq.${group2.user_email},recipient_email.eq.${group2.recipient_email})`);
+    } else {
+      q = q.eq(key, value);
+    }
   });
   return q;
 };
@@ -25,7 +31,7 @@ class SupabaseEntity {
     }));
   }
 
-  async filter(criteria = {}, sort = '') {
+  async filter(criteria = {}, sort = '', limit = 0) {
     let query = supabase.from(this.tableName).select('*');
     query = applyFilter(query, criteria);
 
@@ -35,6 +41,10 @@ class SupabaseEntity {
       // Handle created_date vs created_at in sort
       const sortColumn = column === 'created_date' ? 'created_at' : column;
       query = query.order(sortColumn, { ascending: !descending });
+    }
+
+    if (limit > 0) {
+      query = query.limit(limit);
     }
 
     const { data, error } = await query;

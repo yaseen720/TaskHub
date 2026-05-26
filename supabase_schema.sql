@@ -75,10 +75,13 @@ CREATE TABLE chat_messages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+  channel TEXT DEFAULT 'general', -- Also used for group name
   user_email TEXT NOT NULL,
   user_name TEXT,
+  recipient_email TEXT, -- For individual chats
+  is_private BOOLEAN DEFAULT FALSE,
   content TEXT,
-  type TEXT DEFAULT 'text', -- 'text', 'file'
+  type TEXT DEFAULT 'text', -- 'text', 'file', 'system'
   file_url TEXT
 );
 
