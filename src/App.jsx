@@ -35,6 +35,7 @@ import MyContent from '@/pages/MyContent';
 
 // Layout
 import AppLayout from '@/components/layout/AppLayout';
+import { Separator } from '@/components/ui/separator';
 
 const WorkspaceRouter = () => {
   const { loading, activeWorkspace, workspaces } = useWorkspace();
@@ -87,8 +88,6 @@ const WorkspaceRouter = () => {
     </Routes>
   );
 };
-
-import { Separator } from '@/components/ui/separator';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
