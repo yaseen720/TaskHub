@@ -411,7 +411,9 @@ export default function Chat() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewGroupOpen(false)}>Cancel</Button>
-            <Button onClick={createGroup} disabled={!newGroupName.trim() || selectedMembers.length === 0}>Create Group</Button>
+            <Button onClick={createGroup} disabled={!newGroupName.trim() || sending}>
+              {sending ? 'Creating...' : 'Create Group'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

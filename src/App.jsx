@@ -61,7 +61,7 @@ const WorkspaceRouter = () => {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/kanban" element={<TaskBoard />} />
+        <Route path="/tasks" element={<TaskBoard />} />
         <Route path="/team" element={<Team />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/chat" element={<Chat />} />

@@ -137,7 +137,7 @@ export default function AdminDashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Recent Tasks</CardTitle>
-          <Link to="/kanban"><Button size="sm" variant="ghost">View All</Button></Link>
+          <Link to="/tasks"><Button size="sm" variant="ghost">View All</Button></Link>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

@@ -34,7 +34,7 @@ import { Badge } from '@/components/ui/badge';
 
 const adminNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { label: 'Tasks & Projects', icon: KanbanSquare, path: '/kanban' },
+  { label: 'Tasks & Projects', icon: KanbanSquare, path: '/tasks' },
   { label: 'Task Review', icon: ClipboardList, path: '/task-review' },
   { label: 'My Content', icon: FolderOpen, path: '/my-content' },
   { label: 'Team', icon: Users, path: '/team' },
@@ -47,7 +47,7 @@ const adminNav = [
 
 const employeeNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { label: 'Task Board', icon: KanbanSquare, path: '/kanban' },
+  { label: 'Task Board', icon: KanbanSquare, path: '/tasks' },
   { label: 'My Videos', icon: FolderOpen, path: '/my-content' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Leave Requests', icon: CalendarOff, path: '/leaves' },
@@ -72,7 +72,10 @@ export default function Sidebar() {
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <h1 className="font-bold text-base truncate">TaskHub</h1>
+            <h1 className="font-bold text-base truncate flex items-center gap-2">
+              TaskHub
+              <Badge variant="outline" className="text-[10px] py-0 h-4 px-1 opacity-50">V2</Badge>
+            </h1>
             <p className="text-xs text-sidebar-foreground/60 truncate">
               {activeWorkspace?.name || 'No workspace'}
             </p>
