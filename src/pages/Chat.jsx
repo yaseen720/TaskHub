@@ -76,10 +76,11 @@ export default function Chat() {
     queryKey: ['allChat', wsId],
     queryFn: () => base44.entities.ChatMessage.filter({ workspace_id: wsId }),
     enabled: !!wsId,
+    refetchInterval: 5000,
   });
 
   // Derived data
-  const groups = [...new Set([...DEFAULT_GROUPS, ...allMessages.filter(m => !m.is_private).map(m => m.channel)])];
+  const groups = [...new Set([...DEFAULT_GROUPS, ...allMessages.filter(m => !m.is_private && m.channel).map(m => m.channel)])];
   const sortedMessages = [...messages].reverse();
 
   // Effects
@@ -113,6 +114,7 @@ export default function Chat() {
       await base44.entities.ChatMessage.create(payload);
       setMessageText('');
       queryClient.invalidateQueries({ queryKey: ['chat', wsId] });
+      queryClient.invalidateQueries({ queryKey: ['allChat', wsId] });
     } catch (error) {
       console.error('Chat error:', error);
       toast.error(error.message || 'Failed to send message');
@@ -139,7 +141,7 @@ export default function Chat() {
 
       setActiveGroup(groupName);
       setChatType('group');
-      queryClient.invalidateQueries({ queryKey: ['allChat'] });
+      queryClient.invalidateQueries({ queryKey: ['allChat', wsId] });
       setNewGroupOpen(false);
       setNewGroupName('');
       setSelectedMembers([]);

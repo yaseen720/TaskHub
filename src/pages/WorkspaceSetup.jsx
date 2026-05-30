@@ -7,12 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Building2, KeyRound, Plus, X, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Building2, KeyRound, Plus, X, Loader2, ArrowLeft } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 export default function WorkspaceSetup() {
   const navigate = useNavigate();
+  const { workspaces } = useWorkspace();
   const [loading, setLoading] = useState(false);
 
   // Create workspace state
@@ -149,7 +151,17 @@ export default function WorkspaceSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      {workspaces.length > 0 && (
+        <div className="w-full max-w-lg mb-4 flex justify-start">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Link>
+          </Button>
+        </div>
+      )}
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="text-center mb-8">
