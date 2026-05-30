@@ -47,6 +47,7 @@ export default function Chat() {
   const { data: messages = [] } = useQuery({
     queryKey: ['chat', wsId, chatType, chatType === 'group' ? activeGroup : activeRecipient?.user_email],
     queryFn: () => {
+      if (!currentUser?.email) return [];
       if (chatType === 'group') {
         return base44.entities.ChatMessage.filter(
           { workspace_id: wsId, channel: activeGroup, is_private: false },
@@ -68,7 +69,7 @@ export default function Chat() {
         );
       }
     },
-    enabled: !!wsId && (chatType === 'group' || !!activeRecipient),
+    enabled: !!wsId && !!currentUser && (chatType === 'group' || !!activeRecipient),
     refetchInterval: 3000,
   });
 
@@ -242,8 +243,8 @@ export default function Chat() {
                 {/* We can track unique recipients from allMessages where is_private is true */}
                 {Array.from(new Set(
                   allMessages
-                    .filter(m => m.is_private && (m.user_email === currentUser.email || m.recipient_email === currentUser.email))
-                    .map(m => m.user_email === currentUser.email ? m.recipient_email : m.user_email)
+                    .filter(m => m.is_private && currentUser && (m.user_email === currentUser.email || m.recipient_email === currentUser.email))
+                    .map(m => m.user_email === (currentUser?.email) ? m.recipient_email : m.user_email)
                 )).map(email => {
                   const member = members.find(m => m.user_email === email);
                   if (!member) return null;

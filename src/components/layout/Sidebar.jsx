@@ -34,7 +34,7 @@ import { Badge } from '@/components/ui/badge';
 
 const adminNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { label: 'Kanban Board', icon: KanbanSquare, path: '/kanban' },
+  { label: 'Tasks & Projects', icon: KanbanSquare, path: '/kanban' },
   { label: 'Task Review', icon: ClipboardList, path: '/task-review' },
   { label: 'My Content', icon: FolderOpen, path: '/my-content' },
   { label: 'Team', icon: Users, path: '/team' },
@@ -47,7 +47,7 @@ const adminNav = [
 
 const employeeNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { label: 'My Tasks', icon: KanbanSquare, path: '/kanban' },
+  { label: 'Task Board', icon: KanbanSquare, path: '/kanban' },
   { label: 'My Videos', icon: FolderOpen, path: '/my-content' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Leave Requests', icon: CalendarOff, path: '/leaves' },
@@ -81,36 +81,34 @@ export default function Sidebar() {
       </div>
 
       {/* Workspace Switcher */}
-      {!collapsed && (
-        <div className="px-3 mb-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent h-8 text-xs">
-                <Building2 className="h-3.5 w-3.5 mr-2" />
-                {workspaces.length > 1 ? 'Switch Workspace' : 'Workspace Options'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {workspaces.map(ws => (
-                <DropdownMenuItem key={ws.id} onClick={() => switchWorkspace(ws)}>
-                  <Building2 className="h-4 w-4 mr-2" />
-                  <span className="truncate flex-1">{ws.name}</span>
-                  {ws.id === activeWorkspace?.id && (
-                    <Badge variant="secondary" className="ml-2 text-[10px] px-1 h-4">Active</Badge>
-                  )}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/setup" className="cursor-pointer w-full flex items-center">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Create/Join Workspace
-                </Link>
+      <div className="px-3 mb-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className={`w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent h-8 text-xs ${collapsed ? 'px-0 justify-center' : ''}`}>
+              <Building2 className={`h-3.5 w-3.5 ${collapsed ? '' : 'mr-2'}`} />
+              {!collapsed && (workspaces.length > 1 ? 'Switch Workspace' : 'Workspace Options')}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align={collapsed ? "center" : "start"} className="w-56" side={collapsed ? "right" : "bottom"}>
+            {workspaces.map(ws => (
+              <DropdownMenuItem key={ws.id} onClick={() => switchWorkspace(ws)}>
+                <Building2 className="h-4 w-4 mr-2" />
+                <span className="truncate flex-1">{ws.name}</span>
+                {ws.id === activeWorkspace?.id && (
+                  <Badge variant="secondary" className="ml-2 text-[10px] px-1 h-4">Active</Badge>
+                )}
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/setup" className="cursor-pointer w-full flex items-center">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Create/Join Workspace
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <Separator className="bg-sidebar-border" />
 
