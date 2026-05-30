@@ -25,7 +25,7 @@ const PRIORITY_COLORS = {
   low: 'bg-green-100 text-green-700 border-green-200',
 };
 
-export default function KanbanBoard() {
+export default function TaskBoard() {
   const { activeWorkspace, isAdmin, currentUser } = useWorkspace();
   const wsId = activeWorkspace?.id;
   const queryClient = useQueryClient();

@@ -345,7 +345,7 @@ export default function Chat() {
                           )}
                         </div>
                         <p className={`text-[10px] text-muted-foreground mt-1 ${isMe ? 'text-right mr-1' : 'ml-1'}`}>
-                          {format(new Date(msg.created_date), 'h:mm a')}
+                          {msg.created_date ? format(new Date(msg.created_date), 'h:mm a') : ''}
                         </p>
                       </div>
                     </div>

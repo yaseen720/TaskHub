@@ -21,7 +21,7 @@ A modern task management and collaboration platform.
 
 ## Features
 
-- Task Management (Kanban Board)
+- Task Management (Tasks & Projects)
 - Team Collaboration
 - Chat
 - Analytics

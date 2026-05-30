@@ -20,9 +20,9 @@ import { Label } from '@/components/ui/label';
 
 // Pages
 import WorkspaceSetup from '@/pages/WorkspaceSetup';
-import Dashboard from '@/pages/Dashboard';
-import KanbanBoard from '@/pages/KanbanBoard';
-import Team from '@/pages/Team';
+import Dashboard from './pages/Dashboard';
+import TaskBoard from './pages/TaskBoard';
+import Team from './pages/Team';
 import Chat from '@/pages/Chat';
 import LeaveRequests from '@/pages/LeaveRequests';
 import JoinRequests from '@/pages/JoinRequests';
@@ -61,7 +61,7 @@ const WorkspaceRouter = () => {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/kanban" element={<KanbanBoard />} />
+        <Route path="/kanban" element={<TaskBoard />} />
         <Route path="/team" element={<Team />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/chat" element={<Chat />} />
