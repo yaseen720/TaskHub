@@ -1,3 +1,4 @@
+// BUILD_VERSION: 1717084800000 - Force Vercel Build
 import React, { useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClientInstance } from '@/lib/query-client';
