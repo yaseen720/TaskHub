@@ -49,17 +49,27 @@ const WorkspaceRouter = () => {
 
   if (!activeWorkspace && workspaces.length === 0) {
     return (
-      <Routes>
-        <Route path="/" element={<WorkspaceSetup />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <>
+        <div className="bg-primary text-primary-foreground text-[10px] py-1 text-center font-bold tracking-widest uppercase animate-pulse">
+          HubTask V2 Live Deployment - Updated May 30
+        </div>
+        <Routes>
+          <Route path="/" element={<WorkspaceSetup />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </>
     );
   }
 
   return (
-    <Routes>
-      <Route path="/setup" element={<WorkspaceSetup />} />
-      <Route element={<AppLayout />}>
+    <>
+      {/* DEPLOYMENT VERIFICATION BANNER */}
+      <div className="bg-primary text-primary-foreground text-[10px] py-1 text-center font-bold tracking-widest uppercase animate-pulse">
+        HubTask V2 Live Deployment - Updated May 30
+      </div>
+      <Routes>
+        <Route path="/setup" element={<WorkspaceSetup />} />
+        <Route element={<AppLayout />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tasks" element={<TaskBoard />} />
