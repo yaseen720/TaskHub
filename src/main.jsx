@@ -1,4 +1,4 @@
-// Deploy V2 - Updated at: 2026-05-30
+// DEPLOY_FORCE_TIMESTAMP: 1717086000 - V2 FINAL
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
