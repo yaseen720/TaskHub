@@ -38,16 +38,22 @@ export default function Chat() {
   const scrollRef = useRef(null);
 
   // Queries
-  const { data: members = [] } = useQuery({
+  const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: ['members', wsId],
-    queryFn: () => base44.entities.WorkspaceMember.filter({ workspace_id: wsId, status: 'active' }),
+    queryFn: async () => {
+      console.log('Fetching members for chat in workspace:', wsId);
+      const res = await base44.entities.WorkspaceMember.filter({ workspace_id: wsId, status: 'active' });
+      console.log('Members fetched:', res.length);
+      return res;
+    },
     enabled: !!wsId,
   });
 
   const { data: messages = [] } = useQuery({
     queryKey: ['chat', wsId, chatType, chatType === 'group' ? activeGroup : activeRecipient?.user_email],
-    queryFn: () => {
+    queryFn: async () => {
       if (!currentUser?.email) return [];
+      console.log('Fetching messages for:', chatType, chatType === 'group' ? activeGroup : activeRecipient?.user_email);
       if (chatType === 'group') {
         return base44.entities.ChatMessage.filter(
           { workspace_id: wsId, channel: activeGroup, is_private: false },
@@ -125,12 +131,18 @@ export default function Chat() {
   };
 
   const createGroup = async () => {
-    if (!newGroupName.trim()) return;
+    if (!newGroupName.trim()) {
+      toast.error('Please enter a group name');
+      return;
+    }
+    setSending(true);
     try {
       const groupName = newGroupName.trim().toLowerCase().replace(/\s+/g, '-');
-      const announcement = `Group created by ${currentUser.full_name || currentUser.email}. Members: ${selectedMembers.join(', ')}`;
+      console.log('Creating group:', groupName);
       
-      await base44.entities.ChatMessage.create({
+      const announcement = `Group created by ${currentUser.full_name || currentUser.email}.`;
+      
+      const newMsg = await base44.entities.ChatMessage.create({
         workspace_id: wsId,
         channel: groupName,
         user_email: currentUser.email,
@@ -140,15 +152,22 @@ export default function Chat() {
         is_private: false,
       });
 
+      console.log('Group created message:', newMsg);
+
       setActiveGroup(groupName);
       setChatType('group');
-      queryClient.invalidateQueries({ queryKey: ['allChat', wsId] });
+      
+      await queryClient.invalidateQueries({ queryKey: ['allChat', wsId] });
+      
       setNewGroupOpen(false);
       setNewGroupName('');
       setSelectedMembers([]);
+      toast.success(`Group "${groupName}" created!`);
     } catch (error) {
       console.error('Group error:', error);
       toast.error(error.message || 'Failed to create group');
+    } finally {
+      setSending(false);
     }
   };
 
