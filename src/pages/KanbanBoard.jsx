@@ -70,7 +70,7 @@ export default function KanbanBoard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{isAdmin ? 'Kanban Board' : 'My Tasks'}</h1>
+          <h1 className="text-2xl font-bold">{isAdmin ? 'Tasks & Projects' : 'Task Board'}</h1>
           <p className="text-muted-foreground text-sm mt-1">{tasks.length} tasks total</p>
         </div>
         {isAdmin && (

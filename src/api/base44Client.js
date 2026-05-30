@@ -7,7 +7,7 @@ const applyFilter = (query, criteria) => {
     if (key === '_or') {
       // Specialized OR logic for private chats: (sender=A AND recipient=B) OR (sender=B AND recipient=A)
       const { group1, group2 } = value;
-      q = q.or(`and(user_email.eq."${group1.user_email}",recipient_email.eq."${group1.recipient_email}"),and(user_email.eq."${group2.user_email}",recipient_email.eq."${group2.recipient_email}")`);
+      q = q.or(`and(user_email.eq.${group1.user_email},recipient_email.eq.${group1.recipient_email}),and(user_email.eq.${group2.user_email},recipient_email.eq.${group2.recipient_email})`);
     } else {
       q = q.eq(key, value);
     }
