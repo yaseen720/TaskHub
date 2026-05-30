@@ -86,6 +86,7 @@ const WorkspaceRouter = () => {
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </>
   );
 };
 
